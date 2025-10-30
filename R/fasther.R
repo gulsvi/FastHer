@@ -295,10 +295,10 @@ FastHer <- function(path.in, file.Z, file.POS, file.LD, path.out = NULL, results
     Sys.setenv(OMP_NUM_THREADS = optimal_threads)
     
     # Load data
-    SNP <- read.table(paste0(path.in, file.Z, ".txt"), header = TRUE, stringsAsFactors = FALSE)
-    POS <- read.table(paste0(path.in, file.POS, ".bim"), header = FALSE, stringsAsFactors = FALSE)
+    SNP <- read.table(paste0(path.in,"/", file.Z, ".txt"), header = TRUE, stringsAsFactors = FALSE)
+    POS <- read.table(paste0(path.in,"/", file.POS, ".bim"), header = FALSE, stringsAsFactors = FALSE)
     np <- reticulate::import("numpy")
-    data <- np$load(paste0(path.in, file.LD, ".npz"))
+    data <- np$load(paste0(path.in,"/", file.LD, ".npz"))
     
     # Data preparation
     z <- SNP$Z
