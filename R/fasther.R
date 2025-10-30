@@ -52,7 +52,7 @@ eigen.Python <- function(U, only.values = FALSE) {
 #' @return List with estimation results
 #' @keywords internal
 
-LocalHeritability <- function(Vz2, Uval, n, m, r, start, control_list = NULL) { 
+.LocalHeritability <- function(Vz2, Uval, n, m, r, start, control_list = NULL) { 
     eps <- 1e-9
     Vz2dUval <- Vz2 / Uval
     zUz <- sum(Vz2dUval)
@@ -103,7 +103,7 @@ LocalHeritability <- function(Vz2, Uval, n, m, r, start, control_list = NULL) {
     }
     
     # Validate control_list parameters
-    control_list <- validate_control_list(control_list)
+    control_list <- .validate_control_list(control_list)
     
     fit0 <- stats::optim(par = c(h2 = start, d = 1), fn = Lh, gr = Grad, method = "L-BFGS-B", 
                   lower = c(eps, eps), upper = c(1 - eps, 100), hessian = TRUE, control = control_list)
@@ -138,7 +138,7 @@ LocalHeritability <- function(Vz2, Uval, n, m, r, start, control_list = NULL) {
 #' @return Validated control list with default values for missing parameters
 #' @keywords internal
 
-validate_control_list <- function(control_list) {
+.validate_control_list <- function(control_list) {
     default_control <- list(factr = 1e7, pgtol = 1e-7, maxit = 1000,  fnscale = -1, lmm = 10)
     
     if (is.null(control_list)) {
@@ -169,7 +169,7 @@ validate_control_list <- function(control_list) {
 #' @return List with initial h2 estimate and standard error
 #' @keywords internal
 
-LocalHeritability.ini <- function(Vz2, Uval, n, m, r) {
+.LocalHeritability.ini <- function(Vz2, Uval, n, m, r) {
     Vz2dUval <- Vz2 / Uval
     zUz <- sum(Vz2dUval)
     dd <- Uval * (n / m)
@@ -206,7 +206,7 @@ LocalHeritability.ini <- function(Vz2, Uval, n, m, r) {
 #' Check and Install FastHer Dependencies
 #' @keywords internal
 
-check_fasther_dependencies <- function() {
+.check_fasther_dependencies <- function() {
     required_r_packages <- c("reticulate", "data.table", "compiler", "Matrix")
     missing_r <- required_r_packages[!required_r_packages %in% installed.packages()[,"Package"]]
     
@@ -234,7 +234,7 @@ check_fasther_dependencies <- function() {
     return(TRUE)
 }
 
-check_fasther_dependencies()
+.check_fasther_dependencies()
 
 ###################################################################
 ###                     Main FastHer Function                   ###
@@ -282,7 +282,7 @@ FastHer <- function(path.in, file.Z, file.POS, file.LD, path.out = NULL, results
     
     # Check dependencies if requested
     if (check_dependencies) {
-        check_fasther_dependencies()
+        .check_fasther_dependencies()
     }
     
     library(reticulate)
@@ -342,17 +342,17 @@ FastHer <- function(path.in, file.Z, file.POS, file.LD, path.out = NULL, results
     Vz2 <- Vz^2
     
     # Initial estimation
-    res <- LocalHeritability.ini(Vz2, Uval, n, m, rankU)
+    res <- .LocalHeritability.ini(Vz2, Uval, n, m, rankU)
     initial_h2 <- res$h2
     initial_se <- res$se
     
     # Main estimation
-    myres <- LocalHeritability(Vz2, Uval, n, m, rankU, initial_h2, control_list)
+    myres <- .LocalHeritability(Vz2, Uval, n, m, rankU, initial_h2, control_list)
     hard_settings <- FALSE
 
     if(abs(myres$estimate[2] - 1) >= 0.3) {
         hard.control_list <- list(factr = 1, pgtol = 1e-10, maxit = 10000, fnscale = -1, lmm = 20)
-        myres <- LocalHeritability(Vz2, Uval, n, m, rankU, initial_h2, hard.control_list)
+        myres <- .LocalHeritability(Vz2, Uval, n, m, rankU, initial_h2, hard.control_list)
         hard_settings <- TRUE
      }
     
