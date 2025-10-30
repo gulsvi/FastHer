@@ -10,3 +10,4 @@ BugReports: https://github.com/gulsvi/FastHer/issues
 Depends: R (>= 4.0.0)
 Imports: Matrix, stats
 Encoding: UTF-8
+RoxygenNote: 7.3.3

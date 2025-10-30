@@ -105,7 +105,7 @@ LocalHeritability <- function(Vz2, Uval, n, m, r, start, control_list = NULL) {
     # Validate control_list parameters
     control_list <- validate_control_list(control_list)
     
-    fit0 <- optim(par = c(h2 = start, d = 1), fn = Lh, gr = Grad, method = "L-BFGS-B", 
+    fit0 <- stats::optim(par = c(h2 = start, d = 1), fn = Lh, gr = Grad, method = "L-BFGS-B", 
                   lower = c(eps, eps), upper = c(1 - eps, 100), hessian = TRUE, control = control_list)
     
     # Calculate standard errors
@@ -193,7 +193,7 @@ LocalHeritability.ini <- function(Vz2, Uval, n, m, r) {
         sqrt(-1 / (Part1 + Part2))
     }
     
-    B <- optimize(f = Lh, interval = c(0, 1), maximum = TRUE)
+    B <- stats::optimize(f = Lh, interval = c(0, 1), maximum = TRUE)
     h2 <- B$maximum
     
     return(list(h2 = h2, se = Hessi.exp(h2)))
