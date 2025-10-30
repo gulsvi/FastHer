@@ -1,17 +1,15 @@
-#!/usr/bin/env Rscript
-# Example script for FastHer
-# Load FastHer
+#' FastHer Example Analysis
+#' 
+#' This demo shows how to use FastHer for local heritability estimation
+#' using GWAS summary statistics and LD matrices.
 
-#setwd("..")
-#source("R/fasther.R")
-# Load the FastHer package
 library(FastHer)
 
-# Example usage
+# Example usage of FastHer
 example_analysis <- function() {
-    cat("Running FastHer example...\n")
+    cat("Running FastHer example analysis...\n")
     
-    # Replace with your actual file paths
+    # Example file paths (replace with your actual paths)
     result <- FastHer(
         path.in = "data/",
         file.Z = "ukb_200k_chr22_Z_BPIFC",
@@ -22,12 +20,12 @@ example_analysis <- function() {
     )
     
     cat("\n=== FastHer Results ===\n")
-#   print(result)
+    print(result)
     
     return(result)
 }
 
-# Run example if called directly
+# Run the example
 if (sys.nframe() == 0) {
     example_analysis()
 }
