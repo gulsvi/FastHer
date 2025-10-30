@@ -61,8 +61,8 @@ if (length(missing_files) > 0) {
     
     cat("\n=== FastHer Results ===\n")
     print(result)
-    cat("\n✅ Analysis completed successfully!\n")
-    cat("📊 Results saved to: Results/demo_results_BPIFC.txt\n")
+    cat("\n Analysis completed successfully!\n")
+    cat(" Results saved to: Results/demo_results_BPIFC.txt\n")
 }
 
 cat("\nDemo completed!\n")

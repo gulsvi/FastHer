@@ -4,7 +4,7 @@ Version: 0.1.0
 Authors@R: person("Gulnara", "Svishcheva", email = "gulsvi@mail.ru", role = c("aut", "cre"))
 Description: Implements the FastHer method for local heritability estimation
     using REML function optimized by eigen-decomposition of LD matrix.
-Demo: FastHer_example
+Demo: FastHer_BPIFC_example, FastHer_HIRA_example
 License: MIT
 URL: https://github.com/gulsvi/FastHer
 BugReports: https://github.com/gulsvi/FastHer/issues
@@ -16,3 +16,4 @@ Imports:
     Matrix
 Encoding: UTF-8
 FFastHer-exampleastHer-exampleRoxygenNote: 7.3.3
+RoxygenNote: 7.3.3
