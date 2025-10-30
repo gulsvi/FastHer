@@ -2,12 +2,17 @@ Package: FastHer
 Title: Fast Local Heritability Estimation from GWAS Summary Statistics
 Version: 0.1.0
 Authors@R: person("Gulnara", "Svishcheva", email = "gulsvi@mail.ru", role = c("aut", "cre"))
-Description: Fast and accurate REML-based estimation of local heritability 
-    from GWAS summary statistics and LD matrices.
+Description: Implements the FastHer method for local heritability estimation
+    using REML function optimized by eigen-decomposition of LD matrix.
+Demo: FastHer-example
 License: MIT
 URL: https://github.com/gulsvi/FastHer
 BugReports: https://github.com/gulsvi/FastHer/issues
 Depends: R (>= 4.0.0)
-Imports: Matrix, stats
+Imports: 
+    reticulate,
+    data.table,
+    compiler,
+    Matrix
 Encoding: UTF-8
 RoxygenNote: 7.3.3
