@@ -1,0 +1,61 @@
+FastHer                package:FastHer                 R Documentation
+
+_F_a_s_t_H_e_r: _F_a_s_t _a_n_d _A_c_c_u_r_a_n_c_y _L_o_c_a_l _H_e_r_i_t_a_b_i_l_i_t_y _R_E_M_L _E_s_t_i_m_a_t_i_o_n
+
+_D_e_s_c_r_i_p_t_i_o_n:
+
+     FastHer: Fast and Accurancy Local Heritability REML Estimation
+
+_U_s_a_g_e:
+
+     FastHer(
+       path.in,
+       file.Z,
+       file.POS,
+       file.LD,
+       path.out = NULL,
+       results_file = NULL,
+       control_list = NULL,
+       check_dependencies = FALSE
+     )
+     
+_A_r_g_u_m_e_n_t_s:
+
+  file.Z: Z-statistics file name (without extension)
+
+file.POS: POS file name (without extension)
+
+ file.LD: LD matrix file name (without extension)
+
+results_file: Output file name (optional)
+
+control_list: Optimization control parameters (optional)
+
+check_dependencies: Logical, whether to check for required packages
+          (default: TRUE)
+
+    path: Path to data files
+
+_V_a_l_u_e:
+
+     Data frame with estimation results
+
+_E_x_a_m_p_l_e_s:
+
+     ## Not run:
+     
+     # Example with default parameters:
+     result <- FastHer(path.in = "data/", 
+                      file.Z = "z_statistics",
+                      file.POS = "snp_info", 
+                      file.LD = "ld_matrix")
+     
+     # Example with custom optimization parameters:
+     result <- FastHer(path.in = "data/",
+                      file.Z = "z_statistics", 
+                      file.POS = "snp_info",
+                      file.LD = "ld_matrix",
+                      control_list = list(factr = 1e7, maxit = 5000))
+     ## End(Not run)
+     
+

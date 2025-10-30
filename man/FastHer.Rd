@@ -2,7 +2,7 @@
 % Please edit documentation in R/fasther.R
 \name{FastHer}
 \alias{FastHer}
-\title{FastHer: Fast and Accurancy Local Heritability REML Estimation}
+\title{FastHer: Fast and Accurate Local Heritability REML Estimation}
 \usage{
 FastHer(
   path.in,
@@ -16,25 +16,27 @@ FastHer(
 )
 }
 \arguments{
+\item{path.in}{Path to input data files}
+
 \item{file.Z}{Z-statistics file name (without extension)}
 
 \item{file.POS}{POS file name (without extension)}
 
 \item{file.LD}{LD matrix file name (without extension)}
 
-\item{results_file}{Output file name (optional)}
+\item{path.out}{Path to output directory (optional, default: "Results/")}
+
+\item{results_file}{Output file name (optional, default: "FastHer_results.txt")}
 
 \item{control_list}{Optimization control parameters (optional)}
 
-\item{check_dependencies}{Logical, whether to check for required packages (default: TRUE)}
-
-\item{path}{Path to data files}
+\item{check_dependencies}{Logical, whether to check for required packages (default: FALSE)}
 }
 \value{
 Data frame with estimation results
 }
 \description{
-FastHer: Fast and Accurancy Local Heritability REML Estimation
+FastHer: Fast and Accurate Local Heritability REML Estimation
 }
 \examples{
 \dontrun{

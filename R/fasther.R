@@ -239,16 +239,16 @@ eigen.Python <- function(U, only.values = FALSE) {
 ###################################################################
 ###                     Main FastHer Function                   ###
 ###################################################################
-
-#' FastHer: Fast and Accurancy Local Heritability REML Estimation
+#' FastHer: Fast and Accurate Local Heritability REML Estimation
 #' 
-#' @param path Path to data files
+#' @param path.in Path to input data files
 #' @param file.Z Z-statistics file name (without extension)
 #' @param file.POS POS file name (without extension) 
 #' @param file.LD LD matrix file name (without extension)
-#' @param results_file Output file name (optional)
+#' @param path.out Path to output directory (optional, default: "Results/")
+#' @param results_file Output file name (optional, default: "FastHer_results.txt")
 #' @param control_list Optimization control parameters (optional)
-#' @param check_dependencies Logical, whether to check for required packages (default: TRUE)
+#' @param check_dependencies Logical, whether to check for required packages (default: FALSE)
 #' @return Data frame with estimation results
 #' @export
 #' @examples
