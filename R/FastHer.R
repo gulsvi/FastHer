@@ -82,11 +82,7 @@ FastHer <- function(path.in, file.Z, file.POS, file.LD, path.out = NULL, results
     z <- z * sqrt(n / n_vec)
     
     # Eigen-decomposition and pruning
-    if (m > 100) {
-        eigU <- eigen.Python(U)
-    } else {
-        eigU <- eigen(U, symmetric = TRUE)
-    }
+    eigU <- .eigen_decomp(U)
     
     Uval <- eigU$values
     Uvec <- eigU$vectors

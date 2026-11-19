@@ -29,3 +29,45 @@ eigen.Python <- function(U, only.values = FALSE) {
 }
 
 
+ 
+###################################################################
+###        Eigen-decomposition: Python for m > 100, else R      ###
+###################################################################
+ 
+#' Check that Python module scipy is available
+#' @keywords internal
+.python_scipy_available <- function() {
+    requireNamespace("reticulate", quietly = TRUE) &&
+        isTRUE(tryCatch(reticulate::py_module_available("scipy"),
+                        error = function(e) FALSE))
+}
+ 
+#' Eigen-decomposition of an LD matrix
+#'
+#' Default rule (as in FastHer 0.1.0): Python/scipy for regions with more than
+#' 100 SNPs, base R otherwise. If scipy is not available, base R is used with a
+#' warning (the result is the same, only the speed may differ).
+#'
+#' @param U Symmetric SNP-by-SNP correlation (LD) matrix
+#' @param only.values Logical, return only eigenvalues
+#' @param method "auto" (default), "python" or "R"
+#' @return List with `values` (decreasing) and `vectors`
+#' @keywords internal
+.eigen_decomp <- function(U, only.values = FALSE, method = c("auto", "python", "R")) {
+    method <- match.arg(method)
+    U <- as.matrix(U)
+    use_python <- switch(method, auto = ncol(U) > 100, python = TRUE, R = FALSE)
+    if (use_python && !.python_scipy_available()) {
+        warning("Python module 'scipy' was not found: the eigen-decomposition is done in R ",
+                "and may be slower for large regions. To use Python: reticulate::py_install('scipy').",
+                call. = FALSE)
+        use_python <- FALSE
+    }
+    if (use_python) {
+        res <- eigen.Python(U, only.values = only.values)
+        return(list(values = as.numeric(res$values),
+                    vectors = if (only.values) NA else as.matrix(res$vectors)))
+    }
+    e <- eigen(U, symmetric = TRUE, only.values = only.values)
+    list(values = e$values, vectors = if (only.values) NA else e$vectors)
+}
