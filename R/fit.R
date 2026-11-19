@@ -67,6 +67,8 @@ fasther_fit <- function(z, n, ld, weights = NULL, reml = c("auto", "profile", "t
         stop("'tau' must be a number in (0, 1).", call. = FALSE)
     }
  
+    .check_snp_names(z, ld, weights)
+
     ## harmonize sample sizes
     n_eff <- 1 / mean(1 / n)
     z <- z * sqrt(n_eff / n)

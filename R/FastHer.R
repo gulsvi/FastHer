@@ -108,6 +108,21 @@ FastHer <- function(path.in, file.Z, file.POS, file.LD, path.out = NULL, results
     names(z) <- names(n_vec) <- SNP$Predictor
     U <- as.matrix(data$f[["LD"]])
  
+    ## consistency of the SNPs in the three files
+    if (anyDuplicated(POS[, 2]) > 0L) stop("The .bim file has duplicated SNP names.", call. = FALSE)
+    if (anyDuplicated(SNP$Predictor) > 0L) {
+        stop("The z-statistics file has duplicated SNP names (column Predictor).", call. = FALSE)
+    }
+    miss <- setdiff(POS[, 2], SNP$Predictor)
+    if (length(miss) > 0L) {
+        stop(length(miss), " SNPs of the .bim file are not in the z-statistics file (e.g. ",
+             paste(utils::head(miss, 3), collapse = ", "), ").", call. = FALSE)
+    }
+    if (nrow(U) != nrow(POS) || ncol(U) != nrow(POS)) {
+        stop("The LD matrix is ", nrow(U), " x ", ncol(U), " but the .bim file has ", nrow(POS),
+             " SNPs.", call. = FALSE)
+    }
+ 
     order_SNP <- POS[, 2]
     n_vec <- n_vec[order_SNP]
     z <- z[order_SNP]
