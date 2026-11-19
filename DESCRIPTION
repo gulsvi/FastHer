@@ -13,6 +13,7 @@ Imports:
     data.table,
     compiler,
     Matrix,
-    stats
+    stats,
+    utils
 Encoding: UTF-8
 Config/roxygen2/version: 8.1.1

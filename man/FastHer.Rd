@@ -12,45 +12,80 @@ FastHer(
   path.out = NULL,
   results_file = NULL,
   control_list = NULL,
-  check_dependencies = FALSE
+  check_dependencies = FALSE,
+  reml = c("auto", "profile", "two-parameter"),
+  tau = 0.99999,
+  use_weights = FALSE,
+  power = -0.25,
+  maf_col = NULL,
+  regularize = FALSE,
+  reg_tau = 0.97,
+  reg_control = NULL
 )
 }
 \arguments{
 \item{path.in}{Path to input data files}
 
-\item{file.Z}{Z-statistics file name (without extension)}
+\item{file.Z}{Z-statistics file name (without extension; columns Predictor, Z, n)}
 
-\item{file.POS}{POS file name (without extension)}
+\item{file.POS}{SNP order file name (without extension; .bim format, SNP names in column 2)}
 
-\item{file.LD}{LD matrix file name (without extension)}
+\item{file.LD}{LD matrix file name (without extension; .npz with key "LD")}
 
 \item{path.out}{Path to output directory (optional, default: "Results/")}
 
 \item{results_file}{Output file name (optional, default: "FastHer_results.txt")}
 
-\item{control_list}{Optimization control parameters (optional)}
+\item{control_list}{Optimization control parameters for the two-parameter REML (optional)}
 
 \item{check_dependencies}{Logical, whether to check for required packages (default: FALSE)}
+
+\item{reml}{REML algorithm: "auto" (default), "profile" or "two-parameter"
+(see \code{\link{fasther_fit}})}
+
+\item{tau}{Fraction of the LD variance retained in the eigenvalue truncation
+(default 0.99999)}
+
+\item{use_weights}{Logical, whether to use SNP weights computed from allele
+frequencies (default FALSE); see \code{\link{fasther_weights}}}
+
+\item{power}{LDAK power for the SNP weights (default -0.25)}
+
+\item{maf_col}{Name of the allele-frequency column in the z-statistics file
+(optional; by default a column MAF, AF, AF1, EAF or FREQ, or the 3rd
+column of the .bim file, is used)}
+
+\item{regularize}{Logical, whether to regularize a reference LD matrix
+(default FALSE); see \code{\link{fasther_fit}}}
+
+\item{reg_tau}{Starting fraction of the LD variance for the regularization
+(default 0.97)}
+
+\item{reg_control}{Optional list of regularization settings (see
+\code{\link{fasther_fit}})}
 }
 \value{
-Data frame with estimation results
+Data frame with estimation results (one row)
 }
 \description{
-FastHer: Fast and Accurate Local Heritability REML Estimation
+File-based interface of \code{\link{fasther_fit}}: reads the z-statistics,
+the SNP order file and the LD matrix of a locus, estimates local
+heritability h2 and the concordance parameter d, and writes the results.
 }
 \examples{
 \dontrun{
 # Example with default parameters:
-result <- FastHer(path.in = "data/", 
+result <- FastHer(path.in = "data/",
                  file.Z = "z_statistics",
-                 file.POS = "snp_info", 
+                 file.POS = "snp_info",
                  file.LD = "ld_matrix")
 
-# Example with custom optimization parameters:
+# With SNP weights (allele frequencies in a column MAF of the z-statistics file)
+# and regularization of a reference LD matrix:
 result <- FastHer(path.in = "data/",
-                 file.Z = "z_statistics", 
+                 file.Z = "z_statistics",
                  file.POS = "snp_info",
                  file.LD = "ld_matrix",
-                 control_list = list(factr = 1e7, maxit = 5000))
+                 use_weights = TRUE, regularize = TRUE)
 }
 }

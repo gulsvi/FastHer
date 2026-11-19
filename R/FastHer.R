@@ -1,153 +1,134 @@
 ###################################################################
-###                     Main FastHer Function                   ###
+###        File-based interface (backward compatible)           ###
 ###################################################################
+ 
+# Reads allele frequencies for SNP weighting, in the order of the .bim file.
+# Looks for a column named MAF, AF, AF1, EAF or FREQ (case-insensitive) in the
+# z-statistics file, or for the column 'maf_col' given by the user. If there is
+# none, the 3rd column of the .bim file is used when it holds frequencies in (0, 1).
+.read_maf <- function(SNP, POS, order_SNP, maf_col = NULL) {
+    nm <- names(SNP)
+    col <- maf_col
+    if (is.null(col)) {
+        hit <- match(c("maf", "af", "af1", "eaf", "freq"), tolower(nm), nomatch = 0L)
+        hit <- hit[hit > 0L]
+        if (length(hit) > 0L) col <- nm[hit[1]]
+    }
+    if (!is.null(col)) {
+        if (!col %in% nm) {
+            stop("Column '", col, "' not found in the z-statistics file.", call. = FALSE)
+        }
+        maf <- SNP[[col]]
+        names(maf) <- SNP$Predictor
+        return(maf[order_SNP])
+    }
+    maf <- suppressWarnings(as.numeric(POS[, 3]))
+    if (length(maf) == nrow(POS) && all(is.finite(maf)) && all(maf > 0 & maf < 1)) {
+        return(maf)
+    }
+    stop("SNP weights need allele frequencies: add a column MAF (or AF) to the z-statistics ",
+         "file, name the column with 'maf_col', or put the frequencies in the 3rd column ",
+         "of the .bim file.", call. = FALSE)
+}
+ 
 #' FastHer: Fast and Accurate Local Heritability REML Estimation
-#' 
+#'
+#' File-based interface of \code{\link{fasther_fit}}: reads the z-statistics,
+#' the SNP order file and the LD matrix of a locus, estimates local
+#' heritability h2 and the concordance parameter d, and writes the results.
+#'
 #' @param path.in Path to input data files
-#' @param file.Z Z-statistics file name (without extension)
-#' @param file.POS POS file name (without extension) 
-#' @param file.LD LD matrix file name (without extension)
+#' @param file.Z Z-statistics file name (without extension; columns Predictor, Z, n)
+#' @param file.POS SNP order file name (without extension; .bim format, SNP names in column 2)
+#' @param file.LD LD matrix file name (without extension; .npz with key "LD")
 #' @param path.out Path to output directory (optional, default: "Results/")
 #' @param results_file Output file name (optional, default: "FastHer_results.txt")
-#' @param control_list Optimization control parameters (optional)
+#' @param control_list Optimization control parameters for the two-parameter REML (optional)
 #' @param check_dependencies Logical, whether to check for required packages (default: FALSE)
-#' @return Data frame with estimation results
+#' @param reml REML algorithm: "auto" (default), "profile" or "two-parameter"
+#'   (see \code{\link{fasther_fit}})
+#' @param tau Fraction of the LD variance retained in the eigenvalue truncation
+#'   (default 0.99999)
+#' @param use_weights Logical, whether to use SNP weights computed from allele
+#'   frequencies (default FALSE); see \code{\link{fasther_weights}}
+#' @param power LDAK power for the SNP weights (default -0.25)
+#' @param maf_col Name of the allele-frequency column in the z-statistics file
+#'   (optional; by default a column MAF, AF, AF1, EAF or FREQ, or the 3rd
+#'   column of the .bim file, is used)
+#' @param regularize Logical, whether to regularize a reference LD matrix
+#'   (default FALSE); see \code{\link{fasther_fit}}
+#' @param reg_tau Starting fraction of the LD variance for the regularization
+#'   (default 0.97)
+#' @param reg_control Optional list of regularization settings (see
+#'   \code{\link{fasther_fit}})
+#' @return Data frame with estimation results (one row)
 #' @export
 #' @examples
 #' \dontrun{
 #' # Example with default parameters:
-#' result <- FastHer(path.in = "data/", 
+#' result <- FastHer(path.in = "data/",
 #'                  file.Z = "z_statistics",
-#'                  file.POS = "snp_info", 
+#'                  file.POS = "snp_info",
 #'                  file.LD = "ld_matrix")
 #'
-#' # Example with custom optimization parameters:
+#' # With SNP weights (allele frequencies in a column MAF of the z-statistics file)
+#' # and regularization of a reference LD matrix:
 #' result <- FastHer(path.in = "data/",
-#'                  file.Z = "z_statistics", 
+#'                  file.Z = "z_statistics",
 #'                  file.POS = "snp_info",
 #'                  file.LD = "ld_matrix",
-#'                  control_list = list(factr = 1e7, maxit = 5000))
+#'                  use_weights = TRUE, regularize = TRUE)
 #' }
-
-FastHer <- function(path.in, file.Z, file.POS, file.LD, path.out = NULL, results_file = NULL, 
-                   control_list = NULL, check_dependencies = FALSE) {
+FastHer <- function(path.in, file.Z, file.POS, file.LD, path.out = NULL, results_file = NULL,
+                    control_list = NULL, check_dependencies = FALSE,
+                    reml = c("auto", "profile", "two-parameter"), tau = 0.99999,
+                    use_weights = FALSE, power = -0.25, maf_col = NULL,
+                    regularize = FALSE, reg_tau = 0.97, reg_control = NULL) {
     start_time <- Sys.time()
-    
-    # Input validation
+    reml <- match.arg(reml)
+ 
     if (missing(path.in)) stop("Parameter 'path.in' must be specified")
-	
+    if (!is.logical(use_weights) || length(use_weights) != 1L || is.na(use_weights)) {
+        stop("'use_weights' must be TRUE or FALSE.", call. = FALSE)
+    }
     if (is.null(path.out)) path.out <- "Results/"
-    if (!dir.exists(path.out)) {
-        dir.create(path.out)
-    }
+    if (!dir.exists(path.out)) dir.create(path.out)
     if (is.null(results_file)) results_file <- "FastHer_results.txt"
-    
-    # Check dependencies if requested
-    if (check_dependencies) {
-        .check_fasther_dependencies()
-    }
-    
-    library(reticulate)
-    library(data.table)
-    
-    # Set up parallel processing
-    max_cores <- parallel::detectCores()
-    optimal_threads <- max(1, max_cores - 2)
-    data.table::setDTthreads(optimal_threads)
-    Sys.setenv(OMP_NUM_THREADS = optimal_threads)
-    
-    # Load data
-    SNP <- read.table(paste0(path.in,"/", file.Z, ".txt"), header = TRUE, stringsAsFactors = FALSE)
-    POS <- read.table(paste0(path.in,"/", file.POS, ".bim"), header = FALSE, stringsAsFactors = FALSE)
+ 
+    if (check_dependencies) .check_fasther_dependencies()
+ 
+    ## load data
+    SNP <- utils::read.table(paste0(path.in, "/", file.Z, ".txt"), header = TRUE, stringsAsFactors = FALSE)
+    POS <- utils::read.table(paste0(path.in, "/", file.POS, ".bim"), header = FALSE, stringsAsFactors = FALSE)
     np <- reticulate::import("numpy")
-    data <- np$load(paste0(path.in,"/", file.LD, ".npz"))
-    
-    # Data preparation
+    data <- np$load(paste0(path.in, "/", file.LD, ".npz"))
+ 
     z <- SNP$Z
     n_vec <- SNP$n
     names(z) <- names(n_vec) <- SNP$Predictor
-    
-    LD_array <- data$f[["LD"]]
-    U <- as.matrix(LD_array)
-    m <- ncol(U)
-    
+    U <- as.matrix(data$f[["LD"]])
+ 
     order_SNP <- POS[, 2]
     n_vec <- n_vec[order_SNP]
     z <- z[order_SNP]
-    
-    colnames(U) <- rownames(U) <- order_SNP
-    
-    # Harmonize sample sizes
-    n <- 1 / mean(1 / n_vec)
-    z <- z * sqrt(n / n_vec)
-    
-    # Eigen-decomposition and pruning
-    eigU <- .eigen_decomp(U)
-    
-    Uval <- eigU$values
-    Uvec <- eigU$vectors
-    Uval[Uval < 0] <- 0
-    
-    # Keep components explaining 99.999% of variance
-    cum <- cumsum(Uval) / sum(Uval)
-    threshold <- Uval[min(which(cum > 0.99999))]
-    Uvec <- Uvec[, Uval >= threshold]
-    Uval <- Uval[Uval >= threshold]
-    rankU <- length(Uval)
-    
-    # Project Z-statistics
-    Vz <- c(t(crossprod(z, Uvec)))
-    Vz2 <- Vz^2
-    
-    # Initial estimation
-    res <- .LocalHeritability.ini(Vz2, Uval, n, m, rankU)
-    initial_h2 <- res$h2
-    initial_se <- res$se
-    
-    # Main estimation
-    myres <- .LocalHeritability(Vz2, Uval, n, m, rankU, initial_h2, control_list)
-    hard_settings <- FALSE
-
-    if(abs(myres$estimate[2] - 1) >= 0.3) {
-        hard.control_list <- list(factr = 1, pgtol = 1e-10, maxit = 10000, fnscale = -1, lmm = 20)
-        myres <- .LocalHeritability(Vz2, Uval, n, m, rankU, initial_h2, hard.control_list)
-        hard_settings <- TRUE
-     }
-    
-    # Extract results
-    FH_h2 <- myres$estimate[1]
-    FH_se <- myres$se[1]
-    FH_d <- myres$estimate[2]
-    FH_sed <- myres$se[2]
-    convergence <- myres$code
-    iterations <- myres$iterations
-    
-    # Print convergence information
-    if (myres$code == 0) {
-        cat("Optimization converged successfully in", iterations, "iterations.\n")
-    } else {
-        warning("Optimization did not converge properly. Code: ", myres$code)
+ 
+    weights <- NULL
+    if (use_weights) {
+        weights <- fasther_weights(.read_maf(SNP, POS, order_SNP, maf_col), power = power)
     }
-    
-    # Prepare results
-    FH_Tab <- data.frame(
-        initial_h2 = initial_h2,
-        initial_se = initial_se,
-        m = round(m, 1),
-        rankU = round(rankU, 1),
-        FH_h2 = FH_h2,
-        FH_se = FH_se,
-        FH_d = FH_d,
-        FH_sed = FH_sed,
-        convergence = myres$code,
-        iterations = myres$iterations,
-        hard_settings = hard_settings,
-        time_sec = as.numeric(difftime(Sys.time(), start_time, units = "secs"))
-    )
-    
-    write.table(FH_h2, paste0(path.out, "FH_h2.txt"), col.names = TRUE, row.names = FALSE, sep = "\t", quote = FALSE)
-    write.table(FH_se, paste0(path.out, "FH_se.txt"), col.names = TRUE, row.names = FALSE, sep = "\t", quote = FALSE)
-    write.table(FH_Tab, paste0(path.out, results_file), col.names = TRUE, row.names = FALSE, sep = "\t", quote = FALSE)
-    
+ 
+    res <- fasther_fit(z, n_vec, U, weights = weights, reml = reml, tau = tau,
+                       control_list = control_list, regularize = regularize,
+                       reg_tau = reg_tau, reg_control = reg_control)
+    message("FastHer (", res$method, " REML): h2 = ", format(res$h2, digits = 4),
+            ", SE = ", format(res$se_h2, digits = 4))
+ 
+    FH_Tab <- as.data.frame(res)
+    FH_Tab$time_sec <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
+ 
+    utils::write.table(FH_Tab$FH_h2, paste0(path.out, "FH_h2.txt"), col.names = TRUE, row.names = FALSE, sep = "\t", quote = FALSE)
+    utils::write.table(FH_Tab$FH_se, paste0(path.out, "FH_se.txt"), col.names = TRUE, row.names = FALSE, sep = "\t", quote = FALSE)
+    utils::write.table(FH_Tab, paste0(path.out, results_file), col.names = TRUE, row.names = FALSE, sep = "\t", quote = FALSE)
+ 
     return(FH_Tab)
 }
