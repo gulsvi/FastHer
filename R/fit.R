@@ -11,7 +11,8 @@
 #'
 #' @param z Numeric vector of z-statistics (one per SNP, in the order of the LD matrix)
 #' @param n Sample size: one number or a vector (one value per SNP)
-#' @param ld SNP-by-SNP LD (correlation) matrix of the region
+#' @param ld SNP-by-SNP LD (correlation) matrix of the region; rows and columns must be in
+#'   the same SNP order as z (if both have names, the names are compared)
 #' @param weights Optional SNP weights (one per SNP, e.g. from
 #'   \code{\link{fasther_weights}}); they are scaled to mean square 1 and applied
 #'   as z -> w z and LD -> W LD W before the eigen-decomposition

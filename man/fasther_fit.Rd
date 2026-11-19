@@ -23,7 +23,8 @@ fasther_fit(
 
 \item{n}{Sample size: one number or a vector (one value per SNP)}
 
-\item{ld}{SNP-by-SNP LD (correlation) matrix of the region}
+\item{ld}{SNP-by-SNP LD (correlation) matrix of the region; rows and columns must be in
+the same SNP order as z (if both have names, the names are compared)}
 
 \item{weights}{Optional SNP weights (one per SNP, e.g. from
 \code{\link{fasther_weights}}); they are scaled to mean square 1 and applied
