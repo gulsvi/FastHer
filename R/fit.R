@@ -12,6 +12,9 @@
 #' @param z Numeric vector of z-statistics (one per SNP, in the order of the LD matrix)
 #' @param n Sample size: one number or a vector (one value per SNP)
 #' @param ld SNP-by-SNP LD (correlation) matrix of the region
+#' @param weights Optional SNP weights (one per SNP, e.g. from
+#'   \code{\link{fasther_weights}}); they are scaled to mean square 1 and applied
+#'   as z -> w z and LD -> W LD W before the eigen-decomposition
 #' @param reml REML algorithm: "auto" (default; profile REML, switching to the
 #'   two-parameter REML if the estimate is not finite or lies near the boundary
 #'   of [0, 1]), "profile" or "two-parameter"
@@ -21,10 +24,10 @@
 #' @param eigen_method "auto" (default: Python/scipy for more than 100 SNPs,
 #'   otherwise R), "python" or "R"
 #' @return An object of class "fasther": a list with h2, se_h2, d, se_d,
-#'   wald_d, p_d, m, rank, n_eff, method, fallback, convergence, iterations,
+#'   wald_d, p_d, m, rank, n_eff, weighted, method, fallback, convergence, iterations,
 #'   hard_settings, initial_h2, initial_se, time_sec.
 #' @export
-fasther_fit <- function(z, n, ld, reml = c("auto", "profile", "two-parameter"),
+fasther_fit <- function(z, n, ld, weights = NULL, reml = c("auto", "profile", "two-parameter"),
                         tau = 0.99999, control_list = NULL,
                         eigen_method = c("auto", "python", "R")) {
     start_time <- Sys.time()
@@ -52,6 +55,14 @@ fasther_fit <- function(z, n, ld, reml = c("auto", "profile", "two-parameter"),
     ## harmonize sample sizes
     n_eff <- 1 / mean(1 / n)
     z <- z * sqrt(n_eff / n)
+
+    ## SNP weights (optional)
+    weighted <- !is.null(weights)
+    if (weighted) {
+        w <- .check_weights(weights, m)
+        z <- z * w
+        ld <- ld * tcrossprod(w)
+    }
  
     ## eigen-decomposition (once) and truncation
     eigU <- .eigen_decomp(ld, method = eigen_method)
@@ -80,7 +91,7 @@ fasther_fit <- function(z, n, ld, reml = c("auto", "profile", "two-parameter"),
     out <- list(h2 = fit$estimate[["h2"]], se_h2 = fit$se[["h2"]],
                 d = d, se_d = se_d,
                 wald_d = wald_d, p_d = 2 * stats::pnorm(-abs(wald_d)),
-                m = m, rank = rankU, n_eff = n_eff,
+                m = m, rank = rankU, n_eff = n_eff, weighted = weighted,
                 method = fit$method, fallback = fit$fallback,
                 convergence = fit$code, iterations = as.numeric(fit$iterations),
                 hard_settings = fit$hard_settings,
@@ -110,7 +121,7 @@ print.fasther <- function(x, digits = 4, ...) {
 #' @export
 as.data.frame.fasther <- function(x, row.names = NULL, optional = FALSE, ...) {
     data.frame(initial_h2 = x$initial_h2, initial_se = x$initial_se,
-               m = x$m, rankU = x$rank,
+               m = x$m, rankU = x$rank, weighted = x$weighted,
                FH_h2 = x$h2, FH_se = x$se_h2, FH_d = x$d, FH_sed = x$se_d,
                wald_d = x$wald_d, p_d = x$p_d,
                method = x$method, convergence = x$convergence,
