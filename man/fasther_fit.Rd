@@ -12,7 +12,10 @@ fasther_fit(
   reml = c("auto", "profile", "two-parameter"),
   tau = 0.99999,
   control_list = NULL,
-  eigen_method = c("auto", "python", "R")
+  eigen_method = c("auto", "python", "R"),
+  regularize = FALSE,
+  reg_tau = 0.97,
+  reg_control = NULL
 )
 }
 \arguments{
@@ -37,11 +40,28 @@ truncation (default 0.99999, as in FastHer 0.1.0)}
 
 \item{eigen_method}{"auto" (default: Python/scipy for more than 100 SNPs,
 otherwise R), "python" or "R"}
+
+\item{regularize}{If TRUE, the (reference) LD matrix is regularized by
+truncating its spectrum: starting from the fraction \code{reg_tau} of the LD
+variance, components are dropped from the tail one at a time while the Wald
+statistic for d = 1 exceeds 1.96 (default FALSE). In this case \code{tau} is
+not used}
+
+\item{reg_tau}{Starting fraction of the LD variance retained when
+\code{regularize = TRUE} (default 0.97)}
+
+\item{reg_control}{Optional list with elements \code{min_fraction} (stop when the
+retained fraction is not larger than this value, default 0.95),
+\code{min_rank} (stop when the rank would not exceed this value, default 5)
+and \code{wald} (Wald cut-off, default 1.96)}
 }
 \value{
 An object of class "fasther": a list with h2, se_h2, d, se_d,
   wald_d, p_d, m, rank, n_eff, weighted, method, fallback, convergence, iterations,
-  hard_settings, initial_h2, initial_se, time_sec.
+  hard_settings, initial_h2, initial_se, time_sec. With regularization it
+  also has regularized, reg_fraction (retained fraction of the LD variance),
+  reg_converged (TRUE if the Wald statistic for d reached the cut-off) and
+  reg_path (a data frame with the dropping path).
 }
 \description{
 Estimates local heritability h2 and the concordance parameter d from

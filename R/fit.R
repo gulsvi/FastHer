@@ -23,13 +23,28 @@
 #' @param control_list Optimization control for the two-parameter REML (optional)
 #' @param eigen_method "auto" (default: Python/scipy for more than 100 SNPs,
 #'   otherwise R), "python" or "R"
+#' @param regularize If TRUE, the (reference) LD matrix is regularized by
+#'   truncating its spectrum: starting from the fraction \code{reg_tau} of the LD
+#'   variance, components are dropped from the tail one at a time while the Wald
+#'   statistic for d = 1 exceeds 1.96 (default FALSE). In this case \code{tau} is
+#'   not used
+#' @param reg_tau Starting fraction of the LD variance retained when
+#'   \code{regularize = TRUE} (default 0.97)
+#' @param reg_control Optional list with elements \code{min_fraction} (stop when the
+#'   retained fraction is not larger than this value, default 0.95),
+#'   \code{min_rank} (stop when the rank would not exceed this value, default 5)
+#'   and \code{wald} (Wald cut-off, default 1.96)
 #' @return An object of class "fasther": a list with h2, se_h2, d, se_d,
 #'   wald_d, p_d, m, rank, n_eff, weighted, method, fallback, convergence, iterations,
-#'   hard_settings, initial_h2, initial_se, time_sec.
+#'   hard_settings, initial_h2, initial_se, time_sec. With regularization it
+#'   also has regularized, reg_fraction (retained fraction of the LD variance),
+#'   reg_converged (TRUE if the Wald statistic for d reached the cut-off) and
+#'   reg_path (a data frame with the dropping path).
 #' @export
 fasther_fit <- function(z, n, ld, weights = NULL, reml = c("auto", "profile", "two-parameter"),
                         tau = 0.99999, control_list = NULL,
-                        eigen_method = c("auto", "python", "R")) {
+                        eigen_method = c("auto", "python", "R"),
+                        regularize = FALSE, reg_tau = 0.97, reg_control = NULL) {
     start_time <- Sys.time()
     reml <- match.arg(reml)
     eigen_method <- match.arg(eigen_method)
@@ -70,8 +85,16 @@ fasther_fit <- function(z, n, ld, weights = NULL, reml = c("auto", "profile", "t
     Uvec <- eigU$vectors
     Uval[Uval < 0] <- 0
     cum <- cumsum(Uval) / sum(Uval)
-    threshold <- Uval[min(which(cum > tau))]
-    keep <- Uval >= threshold
+    if (regularize) {
+        ctl <- .reg_control(reg_control)
+        if (!is.numeric(reg_tau) || length(reg_tau) != 1L || reg_tau <= 0 || reg_tau >= 1) {
+            stop("'reg_tau' must be a number in (0, 1).", call. = FALSE)
+        }
+        keep <- seq_len(min(length(Uval), max(sum(cum < reg_tau), ctl$min_rank + 1L)))
+    } else {
+        threshold <- Uval[min(which(cum > tau))]
+        keep <- Uval >= threshold
+    }
     Uvec <- Uvec[, keep, drop = FALSE]
     Uval <- Uval[keep]
     rankU <- length(Uval)
@@ -80,7 +103,14 @@ fasther_fit <- function(z, n, ld, weights = NULL, reml = c("auto", "profile", "t
     Vz2 <- c(crossprod(z, Uvec))^2
  
     ## REML
-    fit <- .reml_fit(Vz2, Uval, n_eff, m, rankU, reml = reml, control_list = control_list)
+    reg <- NULL
+    if (regularize) {
+        reg <- .reml_regularized(Vz2, Uval, cum[keep], n_eff, m, reml, control_list, reg_tau, ctl)
+        fit <- reg$fit
+        rankU <- reg$rank
+    } else {
+        fit <- .reml_fit(Vz2, Uval, n_eff, m, rankU, reml = reml, control_list = control_list)
+    }
     if (fit$code != 0) {
         warning("Optimization did not converge properly. Code: ", fit$code, call. = FALSE)
     }
@@ -92,6 +122,10 @@ fasther_fit <- function(z, n, ld, weights = NULL, reml = c("auto", "profile", "t
                 d = d, se_d = se_d,
                 wald_d = wald_d, p_d = 2 * stats::pnorm(-abs(wald_d)),
                 m = m, rank = rankU, n_eff = n_eff, weighted = weighted,
+                regularized = regularize,
+                reg_fraction = if (regularize) reg$fraction else NA_real_,
+                reg_converged = if (regularize) reg$converged else NA,
+                reg_path = reg$path,
                 method = fit$method, fallback = fit$fallback,
                 convergence = fit$code, iterations = as.numeric(fit$iterations),
                 hard_settings = fit$hard_settings,
@@ -112,6 +146,10 @@ print.fasther <- function(x, digits = 4, ...) {
     cat("  d  = ", format(x$d, digits = digits), " (SE ", format(x$se_d, digits = digits),
         "); Wald(d = 1) = ", format(x$wald_d, digits = 3), ", p = ", format(x$p_d, digits = 3), "\n", sep = "")
     cat("  m = ", x$m, " SNPs, rank = ", x$rank, ", effective n = ", format(x$n_eff, digits = 8), "\n", sep = "")
+    if (isTRUE(x$regularized)) {
+        cat("  regularized LD: retained fraction = ", format(x$reg_fraction, digits = 4),
+            if (isTRUE(x$reg_converged)) "" else " (Wald cut-off not reached)", "\n", sep = "")
+    }
     invisible(x)
 }
  
@@ -122,6 +160,8 @@ print.fasther <- function(x, digits = 4, ...) {
 as.data.frame.fasther <- function(x, row.names = NULL, optional = FALSE, ...) {
     data.frame(initial_h2 = x$initial_h2, initial_se = x$initial_se,
                m = x$m, rankU = x$rank, weighted = x$weighted,
+               regularized = x$regularized, reg_fraction = x$reg_fraction,
+               reg_converged = x$reg_converged,
                FH_h2 = x$h2, FH_se = x$se_h2, FH_d = x$d, FH_sed = x$se_d,
                wald_d = x$wald_d, p_d = x$p_d,
                method = x$method, convergence = x$convergence,
