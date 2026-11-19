@@ -5,7 +5,7 @@ cat("Running real analysis with package data...\n\n")
 
 # Get the path to package data
 pkg_path <- system.file(package = "FastHer")
-data_path <- file.path(pkg_path, "data")
+data_path <- system.file("extdata", package = "FastHer")
 
 cat("Package path:", pkg_path, "\n")
 cat("Data path:", data_path, "\n")
@@ -15,8 +15,8 @@ if (!dir.exists(data_path)) {
     cat("Data directory not found at expected location.\n")
     cat("Trying alternative locations...\n")
     # Try current directory for development
-    if (dir.exists("data")) {
-        data_path <- "data"
+    if (dir.exists("inst/extdata")) {
+        data_path <- "inst/extdata"
         cat("Using local data directory\n")
     } else {
         cat("No data directory found. Demo cannot run.\n")
