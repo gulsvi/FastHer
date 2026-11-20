@@ -20,7 +20,7 @@
 #'   two-parameter REML if the estimate is not finite or lies near the boundary
 #'   of [0, 1]), "profile" or "two-parameter"
 #' @param tau Fraction of the total LD variance retained in the eigenvalue
-#'   truncation (default 0.99999, as in FastHer 0.1.0)
+#'   truncation (default 0.99999, as in FastHer 1.0.0)
 #' @param control_list Optimization control for the two-parameter REML (optional)
 #' @param eigen_method "auto" (default: Python/scipy for more than 100 SNPs,
 #'   otherwise R), "python" or "R"

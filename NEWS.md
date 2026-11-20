@@ -1,4 +1,4 @@
-# FastHer 0.2.0
+# FastHer 1.1.0
  
 ## New features
  
@@ -13,14 +13,14 @@
   smallest eigenvalues are removed one by one, starting from 97% of the LD variance, until the Wald test
   does not reject d = 1.
 * New example with allele frequencies (`sim5k_chr22_1KG_*`) and a demo for SNP weights.
-* Tests (`testthat`), including regression tests against FastHer 0.1.0.
+* Tests (`testthat`), including regression tests against FastHer 1.0.0.
  
 ## Changes
  
 * `FastHer()` is now a file-based wrapper of `fasther_fit()` with the same arguments and output files;
   the result table has additional columns (`weighted`, `regularized`, `reg_fraction`, `reg_converged`,
   `wald_d`, `p_d`, `method`).
-* The two-parameter REML reproduces FastHer 0.1.0; the default profile REML agrees with it to about 1e-8
+* The two-parameter REML reproduces FastHer 1.0.0; the default profile REML agrees with it to about 1e-8
   in h2 on the example loci.
 * Example data moved to `inst/extdata`; the large HIRA example was removed from the package.
 * `FastHer()` no longer changes the number of threads or attaches packages; the unused dependencies
@@ -28,6 +28,6 @@
 * The eigen-decomposition uses Python (scipy) for more than 100 SNPs and falls back to R, with a warning,
   when scipy is not available.
  
-# FastHer 0.1.0
+# FastHer 1.0.0
  
 * Initial release.

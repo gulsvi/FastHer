@@ -1,4 +1,4 @@
-test_that("BPIFC locus reproduces FastHer 0.1.0", {
+test_that("BPIFC locus reproduces FastHer 1.0.0", {
     skip_if_no_python()
     a <- read_bpifc()
     f <- fasther_fit(a$z, a$n, a$ld, reml = "two-parameter")

@@ -17,7 +17,7 @@
 List with `values` (decreasing) and `vectors`
 }
 \description{
-Default rule (as in FastHer 0.1.0): Python/scipy for regions with more than
+Default rule (as in FastHer 1.0.0): Python/scipy for regions with more than
 100 SNPs, base R otherwise. If scipy is not available, base R is used with a
 warning (the result is the same, only the speed may differ).
 }

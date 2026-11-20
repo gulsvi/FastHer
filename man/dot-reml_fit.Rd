@@ -44,7 +44,7 @@ squared projections Vz2 and the eigenvalues Uval are used.
 reml = "profile": one-parameter profile REML (see .reml_profile).
 reml = "two-parameter": joint REML in (h2, d), L-BFGS-B started from the
   one-parameter estimate at d = 1 (Brent's method); stricter settings are
-  used if |d - 1| >= 0.3 (as in FastHer 0.1.0).
+  used if |d - 1| >= 0.3 (as in FastHer 1.0.0).
 reml = "auto" (default): profile REML; if the estimate is not finite or lies
   near the boundary of [0, 1] (closer than `boundary`), the two-parameter
   REML is used instead.

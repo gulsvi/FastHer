@@ -35,7 +35,7 @@ two-parameter REML if the estimate is not finite or lies near the boundary
 of [0, 1]), "profile" or "two-parameter"}
 
 \item{tau}{Fraction of the total LD variance retained in the eigenvalue
-truncation (default 0.99999, as in FastHer 0.1.0)}
+truncation (default 0.99999, as in FastHer 1.0.0)}
 
 \item{control_list}{Optimization control for the two-parameter REML (optional)}
 
