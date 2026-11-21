@@ -1,0 +1,2 @@
+FastHer_BPIFC_example   Local heritability of the BPIFC locus (UKB chr22 demo data)
+FastHer_weights_example Local heritability with SNP weights (simulated chr22 locus, allele frequencies from the data)

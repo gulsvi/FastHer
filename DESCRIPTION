@@ -1,19 +1,24 @@
 Package: FastHer
 Title: Fast Local Heritability Estimation from GWAS Summary Statistics
-Version: 0.1.0
+Version: 1.1.0
 Authors@R: person("Gulnara", "Svishcheva", email = "gulsvi@mail.ru", role = c("aut", "cre"))
-Description: Implements the FastHer method for local heritability estimation
-    using REML function optimized by eigen-decomposition of LD matrix.
-Demo: FastHer_BPIFC_example, FastHer_HIRA_example
-License: MIT
+Description: Estimates local SNP heritability and a model-data concordance
+    parameter from GWAS summary statistics (z-statistics) and a linkage
+    disequilibrium (LD) matrix by exact restricted maximum likelihood (REML).
+    The LD matrix is eigen-decomposed once, after which each REML iteration
+    is cheap. Supports SNP weights computed from allele frequencies, a Wald
+    test for model-data concordance, and regularization of reference LD
+    matrices by adaptive eigenvalue truncation.
+License: MIT + file LICENSE
 URL: https://github.com/gulsvi/FastHer
 BugReports: https://github.com/gulsvi/FastHer/issues
 Depends: R (>= 4.0.0)
-Imports: 
+Imports:
     reticulate,
-    data.table,
-    compiler,
-    Matrix
+    stats,
+    utils
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
 Encoding: UTF-8
-FFastHer-exampleastHer-exampleRoxygenNote: 7.3.3
-RoxygenNote: 7.3.3
+Config/roxygen2/version: 8.1.1
